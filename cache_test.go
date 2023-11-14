@@ -16,8 +16,8 @@ package cache
 
 import (
 	"context"
+	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 	"github.com/stretchr/testify/assert"
-	cacheError "go-generics-cache/error"
 	"testing"
 	"time"
 )

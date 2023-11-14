@@ -16,7 +16,7 @@ package simple
 
 import (
 	"context"
-	cacheError "go-generics-cache/error"
+	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 )
 
 type Cache[K comparable, V any] struct {

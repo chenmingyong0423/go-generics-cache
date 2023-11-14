@@ -16,8 +16,8 @@ package cache
 
 import (
 	"context"
-	cacheError "go-generics-cache/error"
-	"go-generics-cache/simple"
+	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
+	"github.com/chenmingyong0423/go-generics-cache/simple"
 	"sync"
 	"time"
 )
