@@ -17,11 +17,12 @@ package simple
 import (
 	"context"
 
-	cache "github.com/chenmingyong0423/go-generics-cache"
+	"github.com/chenmingyong0423/go-generics-cache/types"
+
 	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 )
 
-var _ cache.ICache[int, any] = (*Cache[int, any])(nil)
+var _ types.ICache[int, any] = (*Cache[int, any])(nil)
 
 type Cache[K comparable, V any] struct {
 	cache map[K]V

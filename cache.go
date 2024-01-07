@@ -16,30 +16,18 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
+
+	"github.com/chenmingyong0423/go-generics-cache/types"
 
 	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 	"github.com/chenmingyong0423/go-generics-cache/simple"
 )
 
-// ICache defines an interface for a key-value cache.
-type ICache[K comparable, V any] interface {
-
-	// Set stores the given key-value pair in the cache.
-	Set(ctx context.Context, key K, value V) error
-
-	// Get retrieves the value associated with the given key from the cache.
-	Get(ctx context.Context, key K) (V, error)
-
-	// Delete removes the value associated with the given key from the cache.
-	Delete(ctx context.Context, key K) error
-
-	Keys() []K
-}
-
 type Cache[K comparable, V any] struct {
-	cache ICache[K, *Item[V]]
+	cache types.ICache[K, *Item[V]]
 	mutex sync.RWMutex
 
 	once  sync.Once
@@ -49,19 +37,9 @@ type Cache[K comparable, V any] struct {
 func NewSimpleCache[K comparable, V any](size int, interval time.Duration) *Cache[K, V] {
 	cache := &Cache[K, V]{
 		cache: simple.NewCache[K, *Item[V]](size),
+		close: make(chan struct{}),
 	}
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				cache.DeleteExpired(context.Background())
-			case <-cache.close:
-				return
-			}
-		}
-	}()
+	cache.cleanup(interval)
 	return cache
 }
 
@@ -117,6 +95,20 @@ func (c *Cache[K, V]) Set(ctx context.Context, key K, value V, opts ...ItemOptio
 	return c.cache.Set(ctx, key, item)
 }
 
+func (c *Cache[K, V]) SetNX(ctx context.Context, key K, value V, opts ...ItemOption) (b bool, err error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	_, err = c.cache.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, cacheError.ErrNoKey) {
+			item := newItem[V](value, opts...)
+			return true, c.cache.Set(ctx, key, item)
+		}
+		return false, err
+	}
+	return false, nil
+}
+
 func (c *Cache[K, V]) Delete(ctx context.Context, key K) (err error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -132,6 +124,21 @@ func (c *Cache[K, V]) Close() (err error) {
 
 func (c *Cache[K, V]) Keys() []K {
 	return c.cache.Keys()
+}
+
+func (c *Cache[K, V]) cleanup(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				c.DeleteExpired(context.Background())
+			case <-c.close:
+				return
+			}
+		}
+	}()
 }
 
 func (c *Cache[K, V]) DeleteExpired(ctx context.Context) {

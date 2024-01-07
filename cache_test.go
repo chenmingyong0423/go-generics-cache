@@ -16,15 +16,22 @@ package cache
 
 import (
 	"context"
-	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
-	"github.com/stretchr/testify/assert"
+	"errors"
 	"testing"
 	"time"
+
+	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewSimpleCache(t *testing.T) {
-	cache := NewSimpleCache[int, int](0, time.Minute)
+	cache := NewSimpleCache[int, int](0, 3*time.Second)
 	assert.NotNil(t, cache)
+	err := cache.Set(context.Background(), 1, 1, WithExpiration(time.Second))
+	assert.NoError(t, err)
+	time.Sleep(time.Second * 4)
+	err = cache.Close()
+	assert.NoError(t, err)
 }
 
 func Test_newItem(t *testing.T) {
@@ -180,6 +187,75 @@ func TestCache_Set(t *testing.T) {
 				get, err := tt.cache.Get(tt.ctx, tt.keys[i])
 				assert.Equal(t, tt.wantErr[i], err)
 				assert.Equal(t, tt.wantValues[i], get)
+			}
+		})
+	}
+}
+
+type errorCache[K comparable, V any] struct {
+}
+
+func (e errorCache[K, V]) Set(ctx context.Context, key K, value V) error {
+	return nil
+}
+
+func (e errorCache[K, V]) Get(ctx context.Context, key K) (v V, err error) {
+	return v, errors.New("get error")
+}
+
+func (e errorCache[K, V]) Delete(ctx context.Context, key K) error {
+	return nil
+}
+
+func (e errorCache[K, V]) Keys() []K {
+	return nil
+}
+
+func TestCache_SetNX(t *testing.T) {
+	testCases := []struct {
+		name   string
+		cache  *Cache[int, int]
+		ctx    context.Context
+		keys   []int
+		values []int
+
+		wantBoolValues []bool
+		wantErr        []error
+	}{
+		{
+			name:           "not exist",
+			cache:          NewSimpleCache[int, int](0, time.Minute),
+			ctx:            context.Background(),
+			keys:           []int{1},
+			values:         []int{1},
+			wantBoolValues: []bool{true},
+			wantErr:        []error{nil},
+		},
+		{
+			name:           "exist",
+			cache:          NewSimpleCache[int, int](0, time.Minute),
+			ctx:            context.Background(),
+			keys:           []int{1, 1, 2},
+			values:         []int{1, 2, 3},
+			wantBoolValues: []bool{true, false, true},
+			wantErr:        []error{nil, nil, nil},
+		},
+		{
+			name:           "error",
+			cache:          &Cache[int, int]{cache: &errorCache[int, *Item[int]]{}},
+			ctx:            context.Background(),
+			keys:           []int{1},
+			values:         []int{1},
+			wantBoolValues: []bool{false},
+			wantErr:        []error{errors.New("get error")},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			for i := range tt.keys {
+				b, err := tt.cache.SetNX(tt.ctx, tt.keys[i], tt.values[i])
+				assert.Equal(t, err, tt.wantErr[i])
+				assert.Equal(t, b, tt.wantBoolValues[i])
 			}
 		})
 	}
