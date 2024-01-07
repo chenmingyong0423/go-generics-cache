@@ -23,7 +23,7 @@ import (
 )
 
 func TestNewSimpleCache(t *testing.T) {
-	cache := NewSimpleCache[int, int](time.Minute)
+	cache := NewSimpleCache[int, int](0, time.Minute)
 	assert.NotNil(t, cache)
 }
 
@@ -66,7 +66,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup for non-existent key in empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				return NewSimpleCache[int, int](time.Minute)
+				return NewSimpleCache[int, int](0, time.Minute)
 			},
 			ctx:       context.Background(),
 			key:       1,
@@ -76,7 +76,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup for non-existent key in non-empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewSimpleCache[int, int](time.Minute)
+				cache := NewSimpleCache[int, int](0, time.Minute)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				return cache
 			},
@@ -88,7 +88,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup and match",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewSimpleCache[int, int](time.Minute)
+				cache := NewSimpleCache[int, int](0, time.Minute)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				return cache
 			},
@@ -100,7 +100,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup the key after the key expires",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewSimpleCache[int, int](time.Minute)
+				cache := NewSimpleCache[int, int](0, time.Minute)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1, WithExpiration(time.Second)))
 				return cache
 			},
@@ -136,7 +136,7 @@ func TestCache_Set(t *testing.T) {
 	}{
 		{
 			name:   "first set",
-			cache:  NewSimpleCache[int, int](time.Minute),
+			cache:  NewSimpleCache[int, int](0, time.Minute),
 			ctx:    context.Background(),
 			keys:   []int{1},
 			values: []int{1},
@@ -147,7 +147,7 @@ func TestCache_Set(t *testing.T) {
 		},
 		{
 			name:   "set multiple keys",
-			cache:  NewSimpleCache[int, int](time.Minute),
+			cache:  NewSimpleCache[int, int](0, time.Minute),
 			ctx:    context.Background(),
 			keys:   []int{1, 2, 3},
 			values: []int{1, 2, 3},
@@ -158,7 +158,7 @@ func TestCache_Set(t *testing.T) {
 		},
 		{
 			name:   "set multiple keys with duplicates",
-			cache:  NewSimpleCache[int, int](time.Minute),
+			cache:  NewSimpleCache[int, int](0, time.Minute),
 			ctx:    context.Background(),
 			keys:   []int{1, 2, 3, 2},
 			values: []int{1, 2, 3, 4},
@@ -198,7 +198,7 @@ func TestCache_Delete(t *testing.T) {
 		{
 			name: "Delete non-existent key from the empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				return NewSimpleCache[int, int](time.Minute)
+				return NewSimpleCache[int, int](0, time.Minute)
 			},
 			keys:     1,
 			wantKeys: []int{},
@@ -207,7 +207,7 @@ func TestCache_Delete(t *testing.T) {
 		{
 			name: "Delete non-existent key from the empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewSimpleCache[int, int](time.Minute)
+				cache := NewSimpleCache[int, int](0, time.Minute)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				return cache
 			},
@@ -218,7 +218,7 @@ func TestCache_Delete(t *testing.T) {
 		{
 			name: "Delete existing keys from the cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewSimpleCache[int, int](time.Minute)
+				cache := NewSimpleCache[int, int](0, time.Minute)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				assert.NoError(t, cache.Set(context.Background(), 2, 2))
 				return cache

@@ -16,13 +16,14 @@ package simple
 
 import (
 	"context"
+	"testing"
+
 	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewCache(t *testing.T) {
-	cache := NewCache[int, int]()
+	cache := NewCache[int, int](0)
 	assert.NotNil(t, cache)
 }
 
@@ -40,7 +41,7 @@ func TestCache_Set(t *testing.T) {
 	}{
 		{
 			name:   "first set",
-			cache:  NewCache[int, int](),
+			cache:  NewCache[int, int](0),
 			ctx:    context.Background(),
 			keys:   []int{1},
 			values: []int{1},
@@ -51,7 +52,7 @@ func TestCache_Set(t *testing.T) {
 		},
 		{
 			name:   "set multiple keys",
-			cache:  NewCache[int, int](),
+			cache:  NewCache[int, int](0),
 			ctx:    context.Background(),
 			keys:   []int{1, 2, 3},
 			values: []int{1, 2, 3},
@@ -62,7 +63,7 @@ func TestCache_Set(t *testing.T) {
 		},
 		{
 			name:   "set multiple keys with duplicates",
-			cache:  NewCache[int, int](),
+			cache:  NewCache[int, int](0),
 			ctx:    context.Background(),
 			keys:   []int{1, 2, 3, 2},
 			values: []int{1, 2, 3, 4},
@@ -101,7 +102,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup for non-existent key in empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				return NewCache[int, int]()
+				return NewCache[int, int](0)
 			},
 			ctx:       context.Background(),
 			key:       1,
@@ -111,7 +112,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup for non-existent key in non-empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewCache[int, int]()
+				cache := NewCache[int, int](0)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				return cache
 			},
@@ -123,7 +124,7 @@ func TestCache_Get(t *testing.T) {
 		{
 			name: "Lookup and match",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewCache[int, int]()
+				cache := NewCache[int, int](0)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				return cache
 			},
@@ -155,7 +156,7 @@ func TestCache_Delete(t *testing.T) {
 		{
 			name: "Delete non-existent key from the empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				return NewCache[int, int]()
+				return NewCache[int, int](0)
 			},
 			keys:     1,
 			wantKeys: []int{},
@@ -164,7 +165,7 @@ func TestCache_Delete(t *testing.T) {
 		{
 			name: "Delete non-existent key from the empty cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewCache[int, int]()
+				cache := NewCache[int, int](0)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				return cache
 			},
@@ -175,7 +176,7 @@ func TestCache_Delete(t *testing.T) {
 		{
 			name: "Delete existing keys from the cache",
 			cache: func(t *testing.T) *Cache[int, int] {
-				cache := NewCache[int, int]()
+				cache := NewCache[int, int](0)
 				assert.NoError(t, cache.Set(context.Background(), 1, 1))
 				assert.NoError(t, cache.Set(context.Background(), 2, 2))
 				return cache

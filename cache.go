@@ -16,10 +16,11 @@ package cache
 
 import (
 	"context"
-	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
-	"github.com/chenmingyong0423/go-generics-cache/simple"
 	"sync"
 	"time"
+
+	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
+	"github.com/chenmingyong0423/go-generics-cache/simple"
 )
 
 // ICache defines an interface for a key-value cache.
