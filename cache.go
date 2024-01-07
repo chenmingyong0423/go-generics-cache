@@ -45,9 +45,9 @@ type Cache[K comparable, V any] struct {
 	close chan struct{}
 }
 
-func NewSimpleCache[K comparable, V any](interval time.Duration) *Cache[K, V] {
+func NewSimpleCache[K comparable, V any](size int, interval time.Duration) *Cache[K, V] {
 	cache := &Cache[K, V]{
-		cache: simple.NewCache[K, *Item[V]](),
+		cache: simple.NewCache[K, *Item[V]](size),
 	}
 	go func() {
 		ticker := time.NewTicker(interval)
@@ -122,7 +122,7 @@ func (c *Cache[K, V]) Delete(ctx context.Context, key K) (err error) {
 	return c.cache.Delete(ctx, key)
 }
 
-func (c *Cache[K, V]) Close(ctx context.Context, key K) (err error) {
+func (c *Cache[K, V]) Close() (err error) {
 	c.once.Do(func() {
 		c.close <- struct{}{}
 	})

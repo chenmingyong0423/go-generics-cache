@@ -16,25 +16,28 @@ package simple
 
 import (
 	"context"
+	cache "github.com/chenmingyong0423/go-generics-cache"
 	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 )
+
+var _ cache.ICache[int, any] = (*Cache[int, any])(nil)
 
 type Cache[K comparable, V any] struct {
 	cache map[K]V
 }
 
-func NewCache[K comparable, V any]() *Cache[K, V] {
+func NewCache[K comparable, V any](size int) *Cache[K, V] {
 	return &Cache[K, V]{
-		cache: make(map[K]V, 0),
+		cache: make(map[K]V, size),
 	}
 }
 
-func (c *Cache[K, V]) Set(ctx context.Context, key K, value V) error {
+func (c *Cache[K, V]) Set(_ context.Context, key K, value V) error {
 	c.cache[key] = value
 	return nil
 }
 
-func (c *Cache[K, V]) Get(ctx context.Context, key K) (V, error) {
+func (c *Cache[K, V]) Get(_ context.Context, key K) (V, error) {
 	var (
 		value V
 		ok    bool
@@ -45,7 +48,7 @@ func (c *Cache[K, V]) Get(ctx context.Context, key K) (V, error) {
 	return value, nil
 }
 
-func (c *Cache[K, V]) Delete(ctx context.Context, key K) error {
+func (c *Cache[K, V]) Delete(_ context.Context, key K) error {
 	delete(c.cache, key)
 	return nil
 }
