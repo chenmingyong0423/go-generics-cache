@@ -20,14 +20,29 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chenmingyong0423/go-generics-cache/types"
-
 	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 	"github.com/chenmingyong0423/go-generics-cache/simple"
 )
 
+var _ ICache[int, any] = (*simple.Cache[int, any])(nil)
+
+// ICache defines an interface for a key-value cache.
+type ICache[K comparable, V any] interface {
+
+	// Set stores the given key-value pair in the cache.
+	Set(ctx context.Context, key K, value V) error
+
+	// Get retrieves the value associated with the given key from the cache.
+	Get(ctx context.Context, key K) (V, error)
+
+	// Delete removes the value associated with the given key from the cache.
+	Delete(ctx context.Context, key K) error
+
+	Keys() []K
+}
+
 type Cache[K comparable, V any] struct {
-	cache types.ICache[K, *Item[V]]
+	cache ICache[K, *Item[V]]
 	mutex sync.RWMutex
 
 	once  sync.Once
