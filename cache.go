@@ -45,16 +45,15 @@ type Cache[K comparable, V any] struct {
 	cache ICache[K, *Item[V]]
 	mutex sync.RWMutex
 
-	once  sync.Once
-	close chan struct{}
+	janitor *janitor
 }
 
-func NewSimpleCache[K comparable, V any](size int, interval time.Duration) *Cache[K, V] {
+func NewSimpleCache[K comparable, V any](ctx context.Context, size int, interval time.Duration) *Cache[K, V] {
 	cache := &Cache[K, V]{
-		cache: simple.NewCache[K, *Item[V]](size),
-		close: make(chan struct{}),
+		cache:   simple.NewCache[K, *Item[V]](size),
+		janitor: newJanitor(ctx, interval),
 	}
-	cache.cleanup(interval)
+	cache.janitor.run(cache.DeleteExpired)
 	return cache
 }
 
@@ -130,30 +129,8 @@ func (c *Cache[K, V]) Delete(ctx context.Context, key K) (err error) {
 	return c.cache.Delete(ctx, key)
 }
 
-func (c *Cache[K, V]) Close() (err error) {
-	c.once.Do(func() {
-		c.close <- struct{}{}
-	})
-	return
-}
-
 func (c *Cache[K, V]) Keys() []K {
 	return c.cache.Keys()
-}
-
-func (c *Cache[K, V]) cleanup(interval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				c.DeleteExpired(context.Background())
-			case <-c.close:
-				return
-			}
-		}
-	}()
 }
 
 func (c *Cache[K, V]) DeleteExpired(ctx context.Context) {
