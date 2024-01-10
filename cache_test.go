@@ -313,3 +313,8 @@ func TestCache_Delete(t *testing.T) {
 		})
 	}
 }
+
+func TestNewLruCache(t *testing.T) {
+	cache := NewLruCache[int, int](context.Background(), 0, 3*time.Second)
+	assert.NotNil(t, cache)
+}

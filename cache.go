@@ -68,7 +68,7 @@ func NewSimpleCache[K comparable, V any](ctx context.Context, size int, interval
 // interval time.Duration - 清理过期缓存项的时间间隔。在这个间隔内，缓存将自动检查并清理过期项。
 func NewLruCache[K comparable, V any](ctx context.Context, cap int, interval time.Duration) *Cache[K, V] {
 	cache := &Cache[K, V]{
-		cache:   simple.NewCache[K, *Item[V]](cap),
+		cache:   lru.NewCache[K, *Item[V]](cap),
 		janitor: newJanitor(ctx, interval),
 	}
 	cache.janitor.run(cache.DeleteExpired)
