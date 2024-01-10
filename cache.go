@@ -20,11 +20,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/chenmingyong0423/go-generics-cache/lru"
+
 	cacheError "github.com/chenmingyong0423/go-generics-cache/error"
 	"github.com/chenmingyong0423/go-generics-cache/simple"
 )
 
-var _ ICache[int, any] = (*simple.Cache[int, any])(nil)
+var (
+	_ ICache[int, any] = (*simple.Cache[int, any])(nil)
+	_ ICache[int, any] = (*lru.Cache[int, any])(nil)
+)
 
 // ICache defines an interface for a key-value cache.
 type ICache[K comparable, V any] interface {
@@ -48,9 +53,22 @@ type Cache[K comparable, V any] struct {
 	janitor *janitor
 }
 
+// NewSimpleCache - 创建一个新的简单缓存。
+// interval time.Duration - 清理过期缓存项的时间间隔。在这个间隔内，缓存将自动检查并清理过期项。
 func NewSimpleCache[K comparable, V any](ctx context.Context, size int, interval time.Duration) *Cache[K, V] {
 	cache := &Cache[K, V]{
 		cache:   simple.NewCache[K, *Item[V]](size),
+		janitor: newJanitor(ctx, interval),
+	}
+	cache.janitor.run(cache.DeleteExpired)
+	return cache
+}
+
+// NewLruCache - 创建一个新的LRU缓存。
+// interval time.Duration - 清理过期缓存项的时间间隔。在这个间隔内，缓存将自动检查并清理过期项。
+func NewLruCache[K comparable, V any](ctx context.Context, cap int, interval time.Duration) *Cache[K, V] {
+	cache := &Cache[K, V]{
+		cache:   simple.NewCache[K, *Item[V]](cap),
 		janitor: newJanitor(ctx, interval),
 	}
 	cache.janitor.run(cache.DeleteExpired)
