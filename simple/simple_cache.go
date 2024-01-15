@@ -47,8 +47,11 @@ func (c *Cache[K, V]) Get(_ context.Context, key K) (V, error) {
 }
 
 func (c *Cache[K, V]) Delete(_ context.Context, key K) error {
-	delete(c.cache, key)
-	return nil
+	if _, ok := c.cache[key]; ok {
+		delete(c.cache, key)
+		return nil
+	}
+	return cacheError.ErrNoKey
 }
 
 func (c *Cache[K, V]) Keys() []K {
